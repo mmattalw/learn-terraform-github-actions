@@ -12,16 +12,16 @@ terraform {
   required_version = ">= 1.1.0"
 
   cloud {
-    organization = "REPLACE_ME"
+    organization = "LoneWolf"
 
-    workspaces {
+    workspaces { 
       name = "gh-actions-demo"
     }
   }
 }
 
 provider "aws" {
-  region = "us-west-2"
+  region = "us-east-1"
 }
 
 resource "random_pet" "sg" {}
@@ -39,12 +39,13 @@ data "aws_ami" "ubuntu" {
     values = ["hvm"]
   }
 
-  owners = ["099720109477"] # Canonical
+  owners = ["058367129984"] # Canonical
 }
 
 resource "aws_instance" "web" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t2.micro"
+  subnet_id       = "subnet-bd3bac81"
   vpc_security_group_ids = [aws_security_group.web-sg.id]
 
   user_data = <<-EOF
@@ -57,8 +58,15 @@ resource "aws_instance" "web" {
               EOF
 }
 
+
+#Virtual Private Cloud where all the resources are created
+data "aws_vpc" "app_vpc" {
+  id = "vpc-623e5204"
+}
+
 resource "aws_security_group" "web-sg" {
   name = "${random_pet.sg.id}-sg"
+  vpc_id      = data.aws_vpc.app_vpc.id
   ingress {
     from_port   = 8080
     to_port     = 8080
